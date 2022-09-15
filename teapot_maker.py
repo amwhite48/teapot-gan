@@ -16,21 +16,36 @@ max_scale = 0.3
 
 def generate_teapot():
     teapot_array = np.zeros((64,64,64))
+    sphere_pot = random.random() < 0.5
+    semicircle_handle = random.random() < 0.5
     
 
     radius = random.uniform(min_rad, max_rad)
     point = np.array([0,0,0])
     height_scale_factor = min_scale + random.random() * (max_scale - min_scale)
     handle_height_scale = random.uniform(0.2, 0.25)
-    # if heart handle, move it higher
-    height_offset = 0 #random.uniform(0, 0.5)
-    sphere_pot = True
-    semicircle_handle = True
-
+    
+    
+    if semicircle_handle:
+        height_offset = 0
+    else:
+        height_offset = random.uniform(.2, .3)
+    # spout top always around top of teapot
     if sphere_pot:
+        spout_top = [-radius - .2,0,radius/2] 
+        spout_bottom_z = random.uniform(-radius, -radius/2)
+        top_handle_z = radius/2 - .1    
         handle_top = [radius, 0, handle_height_scale*(1+height_scale_factor) - radius / 2 + height_offset]
         handle_bottom = [radius, 0, -handle_height_scale*(1+height_scale_factor) - radius / 2 + height_offset]
-        
+    else:
+        spout_top = [-radius - .2,0,.1]
+        top_handle_z = -.05
+        spout_bottom_z = random.uniform(-radius+.2, -radius)
+        handle_top = [radius - .1, 0, handle_height_scale*(1+height_scale_factor) - radius / 1.5 + height_offset]
+        handle_bottom = [radius - .1, 0, -handle_height_scale*(1+height_scale_factor) - radius + height_offset]
+    # randomize the height later
+    spout_bottom = [-radius + .2,0,spout_bottom_z]
+
 
     for i in range(w):
         for j in range(w):
@@ -38,13 +53,15 @@ def generate_teapot():
                 if sphere_pot:
                     if in_sphere(i, j, k, point, radius, height_scale_factor):
                         teapot_array[i,j,k] = 1.0
-                        
                 else:
                     if in_hemisphere(i, j, k, point, radius, height_scale_factor):
                         teapot_array[i,j,k] = 1.0 
-                # calculate handle top and bottom based off height scale factor
-                      
+                # calculate handle top and bottom based off height scale factor        
                 if in_semicircle_handle([i, j, k], handle_top, handle_bottom, .03):
+                    teapot_array[i,j,k] = 1.0 
+                elif in_spout([i, j, k], spout_top, spout_bottom, .025):
+                    teapot_array[i,j,k] = 1.0 
+                elif in_top([i,j,k], top_handle_z, .12):
                     teapot_array[i,j,k] = 1.0 
     return teapot_array
 
@@ -74,15 +91,18 @@ def in_semicircle_handle(point, top, bottom, thickness):
     dist = np.sum(np.power(diff, 2))
     return abs(map_to_space(point[1])) < thickness*3 and (radius ** 2 - thickness) < dist < (radius ** 2 + thickness) # and map_to_space(point[1]) 
 
-def in_heart_handle(top, bottom):
-    pass
+def in_spout(point, top, bottom, thickness):
+    in_space = [map_to_space(point[0]), map_to_space(point[1]), map_to_space(point[2])]
+    dist = distance(top, in_space) + distance(bottom, in_space)
+    line_length = distance(top, bottom)
+    return line_length - thickness < dist < line_length + thickness and in_space[2] < top[2] - thickness and in_space[2] > bottom[2] + thickness
+
+# top is a cylinder
+def in_top(point, top_z, radius):
+    in_space = [map_to_space(point[0]), map_to_space(point[1]), map_to_space(point[2])]
+    return math.sqrt(math.pow(in_space[1], 2) + math.pow(in_space[0], 2)) < radius and in_space[2] > top_z and in_space[2] < top_z + radius
+
+def distance(p, q):
+    return math.sqrt(math.pow(p[0] - q[0], 2) + math.pow(p[1] - q[1], 2) + math.pow(p[2] - q[2], 2))
 
 visualize_voxels(generate_teapot())
-
-# half heart handle
-
-
-# teapot top - vary cylinder vs sphere
-
-# teapot spout - vary length, width
-# on top half of teapot, 
