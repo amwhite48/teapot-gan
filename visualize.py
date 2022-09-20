@@ -1,10 +1,7 @@
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
-# N1 = 64
-# N2 = 64
-# N3 = 64
-# ma = np.random.choice([0,1], size=(N1,N2,N3), p=[0.99, 0.01])
+from pathlib import Path
 
 def visualize_voxels(voxel_array):
     fig = plt.figure()
@@ -14,3 +11,11 @@ def visualize_voxels(voxel_array):
 
     plt.show()
 
+import argparse
+parser = argparse.ArgumentParser(description='program to visualize voxel teapots w/ matplotlib')
+parser.add_argument("-f", "--file_name", help=".npy file to visualize", nargs='*')
+args = parser.parse_args()
+filename = Path(args.file_name[0])
+with open(filename, 'rb') as f:
+    voxels = np.load(f)
+    visualize_voxels(voxels)

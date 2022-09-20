@@ -8,14 +8,14 @@ import math
 # add a handle - curve can be skewed to one side
 # add a little sphere/cylinger thing on the top
 # 0 means nothing there, 1 
-w = 64
+w = 16
 min_rad = 0.5
 max_rad = 0.7
 min_scale = 0.1
 max_scale = 0.3
 
 def generate_teapot():
-    teapot_array = np.zeros((64,64,64))
+    teapot_array = np.zeros((16,16,16))
     sphere_pot = random.random() < 0.5
     semicircle_handle = random.random() < 0.5
     
@@ -57,7 +57,7 @@ def generate_teapot():
                     if in_hemisphere(i, j, k, point, radius, height_scale_factor):
                         teapot_array[i,j,k] = 1.0 
                 # calculate handle top and bottom based off height scale factor        
-                if in_semicircle_handle([i, j, k], handle_top, handle_bottom, .03):
+                if in_semicircle_handle([i, j, k], handle_top, handle_bottom, .04):
                     teapot_array[i,j,k] = 1.0 
                 elif in_spout([i, j, k], spout_top, spout_bottom, .025):
                     teapot_array[i,j,k] = 1.0 
@@ -67,7 +67,7 @@ def generate_teapot():
 
 # map a number 
 def map_to_space(num):
-    return (num - 32) / 32
+    return (num - 8) / 8
 
 def in_sphere(x, y, z, point, rad, height_scale):
     diff = np.array([map_to_space(x) - point[0], map_to_space(y) - point[1], (map_to_space(z) - point[2])*(1+height_scale) + rad/2])
@@ -105,4 +105,14 @@ def in_top(point, top_z, radius):
 def distance(p, q):
     return math.sqrt(math.pow(p[0] - q[0], 2) + math.pow(p[1] - q[1], 2) + math.pow(p[2] - q[2], 2))
 
-visualize_voxels(generate_teapot())
+# visualize_voxels(generate_teapot())
+# save 
+def generate_teapot_dataset(num_teapots):
+    for i in range(num_teapots):
+        teapot = generate_teapot()
+        filename = "teapot_data/teapot_ex_" + str(i) + ".npy"
+        with open(filename, 'wb') as f:
+            np.save(filename, teapot)
+
+
+generate_teapot_dataset(5000)
