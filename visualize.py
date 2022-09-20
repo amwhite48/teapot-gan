@@ -18,4 +18,6 @@ args = parser.parse_args()
 filename = Path(args.file_name[0])
 with open(filename, 'rb') as f:
     voxels = np.load(f)
+    if len(voxels.shape) > 3:
+        voxels = np.squeeze(voxels, axis=3)
     visualize_voxels(voxels)
