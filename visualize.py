@@ -19,5 +19,8 @@ filename = Path(args.file_name[0])
 with open(filename, 'rb') as f:
     voxels = np.load(f)
     if len(voxels.shape) > 3:
+        print(voxels)
         voxels = np.squeeze(voxels, axis=3)
+        trim = voxels < .9
+        voxels[trim] = 0
     visualize_voxels(voxels)

@@ -10,21 +10,20 @@ ds = list(tfds.load('teapot_dataset')['train'])
 train_data = np.asarray(list(map(lambda x: x['voxels'], ds)))
 print(type(train_data))
 
-leaky_relu = tf.keras.layers.LeakyReLU(0.01)
+leaky_relu = tf.keras.layers.LeakyReLU(0.2)
 relu = tf.keras.layers.Activation(activation='relu')
 batch_norm = tf.keras.layers.BatchNormalization()
 latent_dim = 128
-batch_size = 100
 
 def get_dis_model(name="dis_model"):
     return tf.keras.Sequential([
-        tf.keras.layers.Conv3D(128, (4,4,4), 2, padding='same'),
+        tf.keras.layers.Conv3D(128, (4,4,4), 2, kernel_initializer='glorot_normal', padding='same'),
         batch_norm,
         leaky_relu,
-        tf.keras.layers.Conv3D(256, (4,4,4), 2, padding='same'),
+        tf.keras.layers.Conv3D(256, (4,4,4), 2, kernel_initializer='glorot_normal', padding='same'),
         batch_norm,
         leaky_relu,
-        tf.keras.layers.Conv3D(1, (4,4,4), 2, padding='valid'),
+        tf.keras.layers.Conv3D(1, (4,4,4), 2, kernel_initializer='glorot_normal', padding='valid'),
         batch_norm,
         leaky_relu,
         tf.keras.layers.Activation(activation='sigmoid')
@@ -33,13 +32,13 @@ def get_dis_model(name="dis_model"):
 
 def get_gen_model(name="gen_model"):
     return tf.keras.Sequential([
-        tf.keras.layers.Conv3DTranspose(128, (4,4,4), 1, padding='valid'),
+        tf.keras.layers.Conv3DTranspose(128, (4,4,4), 1, kernel_initializer='glorot_normal', padding='valid'),
         batch_norm,
         relu,
-        tf.keras.layers.Conv3DTranspose(32, (4,4,4), 2, padding='same'),
+        tf.keras.layers.Conv3DTranspose(32, (4,4,4), 2, kernel_initializer='glorot_normal', padding='same'),
         batch_norm,
         relu,
-        tf.keras.layers.Conv3DTranspose(1, (4,4,4), 2, padding='same'),
+        tf.keras.layers.Conv3DTranspose(1, (4,4,4), 2, kernel_initializer='glorot_normal', padding='same'),
         batch_norm,
         relu,
         tf.keras.layers.Activation(activation='sigmoid')
@@ -66,7 +65,7 @@ class GAN_Core(tf.keras.Model):
         self.dis_model = dis_model
 
     def sample_z(self, num_samples, **kwargs):
-        return self.z_sampler([num_samples, *self.z_dims[1:]])
+        return self.z_sampler([num_samples, *self.z_dims[1:]], 0, 0.33)
     
     def discriminate(self, inputs, **kwargs):
         return self.dis_model(inputs, **kwargs)
@@ -189,8 +188,8 @@ def d_acc_real(d_fake:tf.Tensor, d_real:tf.Tensor)  -> tf.Tensor:
 
 gan.compile(
     optimizers = {
-        'd_opt' : tf.keras.optimizers.Adam(1e-3, beta_1=0.5), 
-        'g_opt' : tf.keras.optimizers.Adam(1e-3, beta_1=0.5), 
+        'd_opt' : tf.keras.optimizers.Adam(1e-5, beta_1=0.5), 
+        'g_opt' : tf.keras.optimizers.Adam(0.0025, beta_1=0.5), 
     },
     losses = {
         'd_loss' : tf.keras.losses.BinaryCrossentropy(),
@@ -212,7 +211,7 @@ gan.fit(
     train_data[:train_num], 
     d_steps    = 5, 
     g_steps    = 5, 
-    epochs     = 10, ## Feel free to bump this up to 20 when your architecture is done
-    batch_size = 50,
+    epochs     = 100, ## Feel free to bump this up to 20 when your architecture is done
+    batch_size = 200,
     callbacks  = [viz_callback]
 )
